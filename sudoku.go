@@ -8,33 +8,46 @@ import (
 	"unicode"
 )
 
-type Cell uint8
-
+// Grid is the basic sudoku data. The most common is a 9*9 grid.
 type Grid struct {
 	Size         int // Grid is squared, where width == height.
 	RegionWidth  int // Each grid is subdivided in n regions.
 	RegionHeight int
-	Cells        []Cell
+	Cells        []int // Values from 1 to (RegionWidth * RegionHeight). 0 means the value isn't present.
 }
 
 func (grid Grid) String() string {
+
+	nbDigit := getNumberOfDigit(grid.RegionWidth*grid.RegionHeight - 1)
+
+	nbRegion := grid.Size / grid.RegionWidth
+
+	lineSize := grid.Size*nbDigit +
+		(grid.Size - 1) + // number of space after each digit.
+		(nbRegion-1)*2 // count all the region separator: "| "
+
+	line := strings.Repeat("-", lineSize)
+
 	var str strings.Builder
 
 	for row := 0; row < grid.Size; row++ {
-		if row != 0 && row%3 == 0 {
-			str.WriteString("---------------------\n")
+		if row != 0 && row%grid.RegionHeight == 0 {
+			str.WriteString(line)
+			str.WriteString("\n")
 		}
 
 		for col := 0; col < grid.Size; col++ {
-			if col != 0 && col%3 == 0 {
+			if col != 0 && col%grid.RegionWidth == 0 {
 				str.WriteString("| ")
 			}
 
 			i := col + row*grid.Size
-			num := strconv.Itoa(int(grid.Cells[i]))
-
+			num := gridNumberToString(grid.Cells[i], nbDigit)
 			str.WriteString(num)
-			str.WriteRune(' ')
+
+			if col < grid.Size-1 {
+				str.WriteRune(' ')
+			}
 		}
 
 		str.WriteRune('\n')
@@ -43,15 +56,39 @@ func (grid Grid) String() string {
 	return str.String()
 }
 
-func createGridFromString(src string) Grid {
+func gridNumberToString(num, nbDigit int) string {
+	var str string
+	if num == 0 {
+		str = "."
+	} else {
+		str = strconv.Itoa(num)
+	}
 
+	if len(str) < nbDigit {
+		spacePrefix := strings.Repeat(" ", nbDigit-len(str))
+		return spacePrefix + str
+	}
+	return str
+}
+
+// getNumberOfDigit(7861) returns 4
+func getNumberOfDigit(num int) int {
+	nb := 0
+	for num > 0 {
+		num /= 10
+		nb++
+	}
+	return nb
+}
+
+func createGridFromString(src string) Grid {
 	tokens := strings.FieldsFunc(src, func(c rune) bool {
 		return !unicode.IsNumber(c) && c != '|' && c != '-' && c != '.'
 	})
 
 	nbHorizontalRegionSeparator := 0
 	regionWidth := 0
-	numbers := make([]Cell, 0, len(tokens))
+	numbers := make([]int, 0, len(tokens))
 
 	for _, t := range tokens {
 
@@ -62,7 +99,7 @@ func createGridFromString(src string) Grid {
 			nbHorizontalRegionSeparator++
 
 		} else if t == "." {
-			numbers = append(numbers, Cell(0))
+			numbers = append(numbers, 0)
 
 		} else {
 			num, err := strconv.Atoi(t)
@@ -70,7 +107,7 @@ func createGridFromString(src string) Grid {
 				panic(fmt.Sprintf("Cannot parse %d (%v)", num, err))
 			}
 
-			numbers = append(numbers, Cell(num))
+			numbers = append(numbers, num)
 			regionWidth++
 		}
 	}
@@ -83,23 +120,4 @@ func createGridFromString(src string) Grid {
 		RegionHeight: s / (nbHorizontalRegionSeparator + 1),
 		Cells:        numbers,
 	}
-}
-
-func FirstMissingNumber(cells []Cell) Cell {
-	presentNumbers := make([]bool, len(cells)+1)
-	presentNumbers[0] = true
-
-	for _, cell := range cells {
-		if cell > 0 {
-			presentNumbers[cell] = true
-		}
-	}
-
-	for i, presentNumber := range presentNumbers {
-		if !presentNumber {
-			return Cell(i)
-		}
-	}
-
-	return 0
 }
