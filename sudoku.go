@@ -100,6 +100,7 @@ func createGridFromString(src string) Grid {
 
 		} else if t == "." {
 			numbers = append(numbers, 0)
+			regionWidth++
 
 		} else {
 			num, err := strconv.Atoi(t)

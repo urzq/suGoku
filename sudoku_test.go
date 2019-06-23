@@ -5,6 +5,11 @@ import (
 	"testing"
 )
 
+var grid_str_1_1 = `
+. | . 
+-----
+. | .`
+
 var grid_str_2_2 = `
 2 3 | 1 2
 5 6 | 4 5
@@ -72,6 +77,7 @@ func TestCreateGrid(t *testing.T) {
 		expectedRegionWidth  int
 		expectedRegionHeight int
 	}{
+		{grid_str_1_1, 2, 1, 1},
 		{grid_str_2_2, 4, 2, 2},
 		{grid_str_2_3, 6, 2, 3},
 		{grid_str_3_2, 6, 3, 2},
