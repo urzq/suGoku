@@ -1,4 +1,4 @@
-package sudoku
+package main
 
 // IsCellUniqueInRow returns true if the value of the cell at [col, row] is
 // unique within its row.
